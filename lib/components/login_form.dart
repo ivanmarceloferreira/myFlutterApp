@@ -1,14 +1,15 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:my_app/logged_screen.dart';
 import 'package:my_app/model/login.dart';
-import 'package:http/http.dart' as http;
+import 'package:my_app/controllers/login_controller.dart';
 
 // Define a custom Form widget.
 class LoginForm extends StatefulWidget {
-  const LoginForm({super.key});
+  
+  final LoginController loginController;
+
+  const LoginForm({Key? key, required this.loginController}) : super(key: key);
 
   @override
   LoginFormState createState() {
@@ -45,8 +46,8 @@ class LoginFormState extends State<LoginForm> {
   _onLogin() {
     if (_authToken == '') {
       debugPrint('não tem token, vai logar');
-      _login()
-          .then((value) => {navigateToLoggedRoute()})
+      widget.loginController.login(loginTextController.text, passwordTextController.text)
+          .then((value) => { navigateToLoggedRoute(value) })
           .onError((error, stackTrace) => {
                 showDialog(
                   context: context,
@@ -59,54 +60,22 @@ class LoginFormState extends State<LoginForm> {
               });
     } else {
       debugPrint('já tá logado');
-      navigateToLoggedRoute();
+      navigateToLoggedRoute(Login(message: "", authorization: _authToken));
     }
   }
 
-  Future<dynamic> navigateToLoggedRoute() {
+  Future<dynamic> navigateToLoggedRoute(Login value) {
+    debugPrint('vai logar meu fiiii ');
+
+    setState(() {
+      _authToken = value.authorization;
+      _email = loginTextController.text;
+    });
+
     return Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => LoggedScreenRoute(email: _email)),
     );
-  }
-
-  Future<Login> _login() async {
-    String? uri = dotenv.env['URI_REQUEST'];
-    debugPrint('url da env $uri');
-
-    final response = await http.post(
-      Uri.parse('$uri/login'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'email': loginTextController.text,
-        'password': passwordTextController.text
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      // return Album.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
-      var body = response.body;
-      debugPrint('retorno da requisicao $body');
-
-      Login login =
-          Login.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
-
-      setState(() {
-        _authToken = login.authorization;
-        _email = loginTextController.text;
-      });
-      return login;
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      var body = response.body;
-      debugPrint('resposta errada $body');
-      throw Exception('Falha ao fazer o login');
-    }
   }
 
   @override
@@ -117,11 +86,11 @@ class LoginFormState extends State<LoginForm> {
       child: (_authToken == '') ? Column(
         children: <Widget>[
           // Add TextFormFields and ElevatedButton here.
-          Image.network(
-            'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1024px-Palmeiras_logo.svg.png',
-            width: 150,
-            height: 150,
-          ),
+          // Image.network(
+          //   'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1024px-Palmeiras_logo.svg.png',
+          //   width: 150,
+          //   height: 150,
+          // ),
           TextFormField(
             decoration: const InputDecoration(
               icon: Icon(Icons.person),
@@ -175,18 +144,18 @@ class LoginFormState extends State<LoginForm> {
       ) : Center(
         child: Column(
           children: <Widget>[
-            Image.network(
-              'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1024px-Palmeiras_logo.svg.png',
-              width: 150,
-              height: 150,
-            ),
+            // Image.network(
+            //   'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1024px-Palmeiras_logo.svg.png',
+            //   width: 150,
+            //   height: 150,
+            // ),
             const Text(
               'Usuário já logado',
               textAlign: TextAlign.center,
             ),
             ElevatedButton(
               onPressed: () {
-                navigateToLoggedRoute();
+                navigateToLoggedRoute(Login(message: "", authorization: _authToken));
               },
               child: const Text('Entrar')
             )

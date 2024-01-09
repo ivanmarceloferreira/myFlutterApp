@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:my_app/components/login_form.dart';
+import 'package:my_app/controllers/login_controller.dart';
+import 'package:http/http.dart' as http;
 
 void main() async {
   await dotenv.load(fileName: ".env");
@@ -58,6 +60,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  // Create an instance of LoginController with the necessary dependencies
+  final LoginController loginController = LoginController(httpClient: http.Client());
   
   @override
   Widget build(BuildContext context) {
@@ -77,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: const LoginForm()
+      body: LoginForm(loginController: loginController)
     );
   }
 }
